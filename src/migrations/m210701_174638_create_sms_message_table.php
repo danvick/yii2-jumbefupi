@@ -1,6 +1,8 @@
 <?php
 namespace danvick\jumbefupi\migrations;
 
+use Yii;
+use yii\db\Connection;
 use yii\db\Migration;
 
 /**
@@ -8,6 +10,14 @@ use yii\db\Migration;
  */
 class m210701_174638_create_sms_message_table extends Migration
 {
+    /**
+     * @return array|string|Connection
+     */
+    public function getDb()
+    {
+        return Yii::$app->jumbefupi->db;
+    }
+
     /**
      * {@inheritdoc}
      */

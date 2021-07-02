@@ -8,6 +8,7 @@ use yii\base\Component;
 use yii\base\InvalidConfigException;
 use yii\caching\Cache;
 use yii\db\BaseActiveRecord;
+use yii\db\Connection;
 use yii\di\Instance;
 use yii\helpers\Json;
 use yii\helpers\VarDumper;
@@ -44,7 +45,7 @@ class JumbefupiGateway extends Component
     /**
      * @var bool
      */
-    public $cacheBalance = true;
+    public $cacheBalance = false;
 
     /**
      * @var string
@@ -55,6 +56,11 @@ class JumbefupiGateway extends Component
      * @var Cache|array|string
      */
     public $cache = 'cache';
+
+    /**
+     * @var Connection|array|string
+     */
+    public $db = 'db';
 
     /**
      * @inheritdoc
@@ -70,12 +76,15 @@ class JumbefupiGateway extends Component
             throw new \yii\base\Exception('Jumbefupi API key must be set');
         }
         $this->cache = Instance::ensure($this->cache, Cache::class);
+        $this->db = Instance::ensure($this->db, Connection::class);
+        // $this->model = Instance::ensure($this->model, BaseActiveRecord::class);
     }
 
     /**
      * @return Client
      */
-    public function getHttpClient(){
+    public function getHttpClient()
+    {
         return new Client(['baseUrl' => 'https://api.jumbefupi.com/v2']);
     }
 
