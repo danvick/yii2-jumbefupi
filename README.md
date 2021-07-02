@@ -21,6 +21,18 @@ or add
 
 to the `require` section of your `composer.json` file.
 
+Then in your `composer.json`, add this repository to the `repositories` array.
+```json lines
+{
+  ...
+  "repositories": [
+    {
+      "type": "vcs",
+      "url": "https://github.com/danvick/yii2-jumbefupi"
+    }
+  ],
+}
+```
 
 
 Usage
@@ -80,6 +92,8 @@ The server response to the callback will take the following shape:
 Yii::$app->jumbefupi->getMessageStatus($messageId)
 ```
 `$messageId`: message identifier found within the `message_id` column in the `sms_message` table
+
+The message will be automatically updated in the DB on successful server response.
 
 ### Checking your JumbeFupi account balance
 Returns your JumbeFupi account balance. The balance can be cached if `cacheBalance` is set to true in config. The cached balance if any will be deleted on sending message(s)
