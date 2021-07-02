@@ -6,7 +6,9 @@ use danvick\jumbefupi\models\SmsMessage;
 use Yii;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
+use yii\caching\Cache;
 use yii\db\BaseActiveRecord;
+use yii\di\Instance;
 use yii\helpers\Json;
 use yii\helpers\VarDumper;
 use yii\httpclient\Client;
@@ -40,6 +42,44 @@ class JumbefupiGateway extends Component
     public $callbackUrl = null;
 
     /**
+     * @var bool
+     */
+    public $cacheBalance = true;
+
+    /**
+     * @var string
+     */
+    public $balanceCacheKey = 'JUMBEFUPI_BALANCE';
+
+    /**
+     * @var Cache|array|string
+     */
+    public $cache = 'cache';
+
+    /**
+     * @inheritdoc
+     * @throws \yii\base\Exception
+     */
+    public function init()
+    {
+        parent::init();
+        if (empty($this->gatewayUsername)) {
+            throw new \yii\base\Exception('Jumbefupi Username must be set');
+        }
+        if (empty($this->gatewayApiKey)) {
+            throw new \yii\base\Exception('Jumbefupi API key must be set');
+        }
+        $this->cache = Instance::ensure($this->cache, Cache::class);
+    }
+
+    /**
+     * @return Client
+     */
+    public function getHttpClient(){
+        return new Client(['baseUrl' => 'https://api.jumbefupi.com/v2']);
+    }
+
+    /**
      * @param string|string[] $recipients
      * @param string $text
      * @param string $senderId
@@ -61,10 +101,8 @@ class JumbefupiGateway extends Component
             "sender_id" => $senderId,
             "callback_url" => $this->callbackUrl,
         ]);
-        $client = new Client(['baseUrl' => 'https://api.jumbefupi.com/v2/send-message']);
-        $response = $client->createRequest()
-            ->setMethod('post')
-            ->addHeaders(['Authorization' => 'Basic ' . base64_encode($this->gatewayUsername . ":" . $this->gatewayApiKey)])
+        $response = $this->getHttpClient()->post('send-message')
+            ->addHeaders(['Authorization' => 'Basic ' . base64_encode("$this->gatewayUsername:$this->gatewayApiKey")])
             ->addHeaders(['Content-Type' => 'application/json'])
             ->addHeaders(['Content-Length' => strlen($data)])
             ->setContent($data)
@@ -72,66 +110,74 @@ class JumbefupiGateway extends Component
         $responseContent = Json::decode($response->content, true);
         if (!$response->isOk) {
             throw new \yii\base\Exception("RESPONSE ERROR: " . VarDumper::dumpAsString($responseContent) . " \nREQUEST DATA: " . VarDumper::dumpAsString($data));
-        } else {
-            $requestId = $responseContent['request_id'];
-            $messages = $responseContent['messages'];
-            $modelClass = Yii::createObject($this->model);
-            foreach ($messages as $message) {
-                $messageModel = new $modelClass([
-                    'text' => $text,
-                    'sms_count' => $message['sms_count'],
-                    'message_id' => $message['message_id'],
-                    'phone_number' => $message['phone_number'],
-                    'status' => $message['status'],
-                    'request_id' => $requestId,
-                ]);
-                $messageModel->save(false);
-            }
-            return $requestId;
         }
+        Yii::$app->cache->delete($this->balanceCacheKey);
+        $requestId = $responseContent['request_id'];
+        $messages = $responseContent['messages'];
+        $modelClass = Yii::createObject($this->model);
+        foreach ($messages as $message) {
+            $messageModel = new $modelClass([
+                'text' => $text,
+                'sms_count' => $message['sms_count'],
+                'message_id' => $message['message_id'],
+                'phone_number' => $message['phone_number'],
+                'status' => $message['status'],
+                'request_id' => $requestId,
+            ]);
+            $messageModel->save(false);
+        }
+        return $requestId;
     }
 
     /**
      * @param $messageId
+     * @return mixed
+     * @throws Exception
+     * @throws InvalidConfigException
      * @throws \yii\base\Exception
      */
     public function getMessageStatus($messageId)
     {
-        $client = new Client(['baseUrl' => 'https://api.jumbefupi.com/v2/status/message']);
-        $response = $client->createRequest()
-            ->setMethod('get')
-            ->addHeaders(['Authorization' => 'Basic ' . base64_encode($this->gatewayUsername . ":" . $this->gatewayApiKey)])
-            ->setData(['id' => $messageId])
+        $response = $this->getHttpClient()->get('status/message', ['id' => $messageId])
+            ->addHeaders(['Authorization' => 'Basic ' . base64_encode("$this->gatewayUsername:$this->gatewayApiKey")])
             ->addHeaders(['Content-Type' => 'application/json'])
             ->send();
         $responseContent = Json::decode($response->content, true);
         if (!$response->isOk) {
-            throw new \yii\base\Exception("RESPONSE ERROR: " . VarDumper::dumpAsString($responseContent) . " \nREQUEST DATA: " . VarDumper::dumpAsString($data));
-        } else {
-            $modelClass = Yii::createObject($this->model);
-            $message = $modelClass::findOne(['message_id' => $messageId]);
-            $message->status = $responseContent['status'];
-            $message->save(false);
+            throw new \yii\base\Exception("RESPONSE ERROR: " . VarDumper::dumpAsString($responseContent));
         }
+        $modelClass = Yii::createObject($this->model);
+        $message = $modelClass::findOne(['message_id' => $messageId]);
+        $message->status = $responseContent['status'];
+        $message->save(false);
+        return $message->status;
     }
 
     /**
      * @return bool|string
      * @throws InvalidConfigException
      * @throws Exception
+     * @throws \yii\base\Exception
      */
-    public function checkSmsBalance()
+    public function checkBalance($fromCache = true)
     {
-        $client = new Client(['baseUrl' => 'https://api.jumbefupi.com/v2/balance']);
-        $client = $client->createRequest()
-            ->setMethod('get')
-            ->addHeaders(['Content-Type' => 'application/text'])
-            ->addHeaders(['Authorization' => 'Basic ' . base64_encode($this->gatewayUsername . ":" . $this->gatewayApiKey)]);
-        $response = $client->send();
-        if ($response->isOk) {
-            $decodedResponse = Json::decode($response->content);
-            return $decodedResponse['balance'];
+        if ($fromCache && $this->cacheBalance) {
+            $cachedValue = $this->cache->get($this->balanceCacheKey);
+            if ($cachedValue !== null) {
+                return $cachedValue;
+            }
         }
-        return false;
+        $response = $this->getHttpClient()->get('balance')
+            ->addHeaders(['Content-Type' => 'application/text'])
+            ->addHeaders(['Authorization' => 'Basic ' . base64_encode("$this->gatewayUsername:$this->gatewayApiKey")])
+            ->send();
+        if (!$response->isOk) {
+            throw new \yii\base\Exception("RESPONSE ERROR: " . VarDumper::dumpAsString(Json::decode($response->content)));
+        }
+        $balance = Json::decode($response->content)['balance'];
+        if ($this->cacheBalance) {
+            $this->cache->add($this->balanceCacheKey, $balance);
+        }
+        return $balance;
     }
 }
