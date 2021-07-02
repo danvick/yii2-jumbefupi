@@ -21,7 +21,7 @@ or add
 
 to the `require` section of your `composer.json` file.
 
-Then in your `composer.json`, add this repository to the `repositories` array.
+To always use the latest version from Github, in your `composer.json`, add this repository to the `repositories` section.
 ```json lines
 {
   ...
@@ -56,6 +56,20 @@ The extension is used as an application component and configured in the applicat
         'balanceCacheKey' => 'JUMBEFUPI_BALANCE',           // OPTIONAL - Cache key for storage of JumbeFupi account balance
     ],
 ]
+```
+
+You also should configure the extension migrations to be run in your application config by adding  `danvick\jumbefupi\migrations` to your `migrationNamespaces`:
+```php
+'controllerMap' => [
+    'migrate' => [
+        'class' => 'yii\console\controllers\MigrateController',
+        ...
+        'migrationNamespaces' => [
+            ...
+            'danvick\jumbefupi\migrations'
+        ],
+    ],
+],
 ```
 
 ### Sending a message
