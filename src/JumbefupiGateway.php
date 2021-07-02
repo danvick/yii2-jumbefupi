@@ -118,7 +118,8 @@ class JumbefupiGateway extends Component
             ->send();
         $responseContent = Json::decode($response->content, true);
         if (!$response->isOk) {
-            throw new \yii\base\Exception("RESPONSE ERROR: " . VarDumper::dumpAsString($responseContent) . " \nREQUEST DATA: " . VarDumper::dumpAsString($data));
+            Yii::error("RESPONSE ERROR: " . VarDumper::dumpAsString($responseContent) . " \nREQUEST DATA: " . VarDumper::dumpAsString($data));
+            throw new \yii\base\Exception($responseContent['message']);
         }
         Yii::$app->cache->delete($this->balanceCacheKey);
         $requestId = $responseContent['request_id'];
@@ -153,7 +154,8 @@ class JumbefupiGateway extends Component
             ->send();
         $responseContent = Json::decode($response->content, true);
         if (!$response->isOk) {
-            throw new \yii\base\Exception("RESPONSE ERROR: " . VarDumper::dumpAsString($responseContent));
+            Yii::error("JUMBEFUPI RESPONSE ERROR: " . VarDumper::dumpAsString($responseContent));
+            throw new \yii\base\Exception($responseContent['message']);
         }
         $modelClass = Yii::createObject($this->model);
         $message = $modelClass::findOne(['message_id' => $messageId]);
@@ -163,9 +165,8 @@ class JumbefupiGateway extends Component
     }
 
     /**
+     * @param bool $fromCache
      * @return bool|string
-     * @throws InvalidConfigException
-     * @throws Exception
      * @throws \yii\base\Exception
      */
     public function checkBalance($fromCache = true)
@@ -181,7 +182,8 @@ class JumbefupiGateway extends Component
             ->addHeaders(['Authorization' => 'Basic ' . base64_encode("$this->gatewayUsername:$this->gatewayApiKey")])
             ->send();
         if (!$response->isOk) {
-            throw new \yii\base\Exception("RESPONSE ERROR: " . VarDumper::dumpAsString(Json::decode($response->content)));
+            Yii::error("JUMBEFUPI RESPONSE ERROR: " . VarDumper::dumpAsString(Json::decode($response->content)));
+            throw new \yii\base\Exception(Json::decode($response->content)['message']);
         }
         $balance = Json::decode($response->content)['balance'];
         if ($this->cacheBalance) {
