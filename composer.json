@@ -1,0 +1,26 @@
+{
+    "name": "danvick/yii2-jumbefupi",
+    "description": "Yii2 extension for integrating with JumbeFupi SMS Gateway",
+    "type": "yii2-extension",
+    "keywords": ["yii2","extension"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Danvick Miller",
+            "email": "danvickmiller@gmail.com"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": "~2.0.0"
+    }
+    ,
+    "require-dev": {
+        "roave/security-advisories": "dev-latest"
+    },
+    "autoload": {
+        "psr-4": {
+            "danvick\\jumbefupi\\": "src",
+            "danvick\\jumbefupi\\migrations\\": "src/migrations"
+        }
+    }
+}
