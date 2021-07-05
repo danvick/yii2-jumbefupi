@@ -2,8 +2,10 @@
 
 namespace danvick\jumbefupi\models;
 
+use Yii;
 use yii\behaviors\BlameableBehavior;
 use yii\behaviors\TimestampBehavior;
+use yii\db\ActiveRecord;
 use yii\db\Expression;
 
 /**
@@ -21,7 +23,7 @@ use yii\db\Expression;
  * @property string|null $created_at
  * @property string|null $updated_at
  */
-class SmsMessage extends \yii\db\ActiveRecord
+class SmsMessage extends ActiveRecord
 {
     /**
      * {@inheritdoc}
@@ -31,6 +33,9 @@ class SmsMessage extends \yii\db\ActiveRecord
         return 'sms_message';
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public static function getDb()
     {
         return Yii::$app->jumbefupi->db;
