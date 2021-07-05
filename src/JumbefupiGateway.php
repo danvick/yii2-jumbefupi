@@ -173,7 +173,7 @@ class JumbefupiGateway extends Component
     {
         if ($fromCache && $this->cacheBalance) {
             $cachedValue = $this->cache->get($this->balanceCacheKey);
-            if ($cachedValue !== null) {
+            if ($cachedValue !== false) {
                 return $cachedValue;
             }
         }
