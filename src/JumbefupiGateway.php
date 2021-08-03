@@ -110,7 +110,7 @@ class JumbefupiGateway extends Component
      * @throws \yii\base\Exception
      * @throws \Exception
      */
-    public function sent($message)
+    public function send($message)
     {
         if ($this->useFileTransport) {
             return $this->saveMessage($message);
