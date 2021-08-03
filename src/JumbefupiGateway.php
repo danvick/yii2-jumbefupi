@@ -15,6 +15,10 @@ use yii\helpers\VarDumper;
 use yii\httpclient\Client;
 use yii\httpclient\Exception;
 
+/**
+ *
+ * @property-read Client $httpClient
+ */
 class JumbefupiGateway extends Component
 {
     /**
@@ -30,17 +34,17 @@ class JumbefupiGateway extends Component
     /**
      * @var string
      */
-    public $gatewayUsername = null;
+    public $gatewayUsername;
 
     /**
      * @var string
      */
-    public $gatewayApiKey = null;
+    public $gatewayApiKey;
 
     /**
      * @var string
      */
-    public $callbackUrl = null;
+    public $callbackUrl;
 
     /**
      * @var bool
@@ -61,6 +65,16 @@ class JumbefupiGateway extends Component
      * @var Connection|array|string
      */
     public $db = 'db';
+
+    /**
+     * @var bool
+     */
+    public $useFileTransport = false;
+
+    /**
+     * @var string
+     */
+    public $fileTransportPath = '@runtime/messages';
 
     /**
      * @inheritdoc
@@ -89,25 +103,39 @@ class JumbefupiGateway extends Component
     }
 
     /**
-     * @param string|string[] $recipients
-     * @param string $text
-     * @param string $senderId
+     * @param TextMessage $message
+     * @return bool|mixed
+     * @throws Exception
+     * @throws InvalidConfigException
+     * @throws \yii\base\Exception
+     * @throws \Exception
+     */
+    public function sent($message)
+    {
+        if ($this->useFileTransport) {
+            return $this->saveMessage($message);
+        }
+
+        return $this->sendMessage($message);
+    }
+
+    /**
+     * @param TextMessage $message
      * @throws Exception
      * @throws InvalidConfigException
      * @throws \yii\base\Exception
      */
-    public function sendMessage($recipients, $text, $senderId = null)
+    public function sendMessage($message) //TODO: Make this protected
     {
-        if ($senderId === null) {
-            $senderId = $this->senderId;
-        }
-        if (is_array($recipients)) {
-            $recipients = implode(",", $recipients);
+        if (is_array($message->recipients)) {
+            $recipients = implode(",", $message->recipients);
+        } else {
+            $recipients = $message->recipients;
         }
         $data = Json::encode([
-            "message" => $text,
+            "message" => $message->text,
             "recipients" => $recipients,
-            "sender_id" => $senderId,
+            "sender_id" => $message->senderId ?? $this->senderId,
             "callback_url" => $this->callbackUrl,
         ]);
         $response = $this->getHttpClient()->post('send-message')
@@ -125,13 +153,13 @@ class JumbefupiGateway extends Component
         $requestId = $responseContent['request_id'];
         $messages = $responseContent['messages'];
         $modelClass = Yii::createObject($this->model);
-        foreach ($messages as $message) {
+        foreach ($messages as $textMessage) {
             $messageModel = new $modelClass([
-                'text' => $text,
-                'sms_count' => $message['sms_count'],
-                'message_id' => $message['message_id'],
-                'phone_number' => $message['phone_number'],
-                'status' => $message['status'],
+                'text' => $message->text,
+                'sms_count' => $textMessage['sms_count'],
+                'message_id' => $textMessage['message_id'],
+                'phone_number' => $textMessage['phone_number'],
+                'status' => $textMessage['status'],
                 'request_id' => $requestId,
             ]);
             $messageModel->save(false);
@@ -190,5 +218,34 @@ class JumbefupiGateway extends Component
             $this->cache->add($this->balanceCacheKey, $balance);
         }
         return $balance;
+    }
+
+    /**
+     * @param TextMessage $message
+     * @return String
+     * @throws \Exception
+     */
+    protected function saveMessage($message)
+    {
+        $path = Yii::getAlias($this->fileTransportPath);
+        if (!is_dir($path) && !mkdir($path, 0777, true) && !is_dir($path)) {
+            throw new \RuntimeException(sprintf('Directory "%s" was not created', $path));
+        }
+        $messageFilename = $this->generateMessageFileName(); //TODO: Use UUID?
+        $file = $path . '/' . $messageFilename;
+        file_put_contents($file, $message->toString());
+
+        return $messageFilename;
+    }
+
+    /**
+     * @return string the file name for saving the message when [[useFileTransport]] is true.
+     * @throws \Exception
+     */
+    protected function generateMessageFileName()
+    {
+        $time = microtime(true);
+
+        return date('Ymd-His-', $time) . sprintf('%04d', (int)(($time - (int)$time) * 10000)) . '-' . sprintf('%04d', random_int(0, 10000)) . '.txt';
     }
 }
