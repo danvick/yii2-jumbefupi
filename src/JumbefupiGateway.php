@@ -125,7 +125,7 @@ class JumbefupiGateway extends Component
      * @throws InvalidConfigException
      * @throws \yii\base\Exception
      */
-    public function sendMessage($message) //TODO: Make this protected
+    protected function sendMessage($message) //TODO: Make this protected
     {
         if (is_array($message->recipients)) {
             $recipients = implode(",", $message->recipients);
