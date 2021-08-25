@@ -187,9 +187,11 @@ class JumbefupiGateway extends Component
         }
         $modelClass = Yii::createObject($this->model);
         $message = $modelClass::findOne(['message_id' => $messageId]);
-        $message->status = $responseContent['status'];
-        $message->save(false);
-        return $message->status;
+        if ($message) {
+            $message->status = $responseContent['status'];
+            $message->save(false);
+        }
+        return $responseContent['status'];
     }
 
     /**
