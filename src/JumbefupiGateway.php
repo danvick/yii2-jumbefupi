@@ -135,7 +135,7 @@ class JumbefupiGateway extends Component
         $data = Json::encode([
             "message" => $message->text,
             "recipients" => $recipients,
-            "sender_id" => $message->senderId ?? $this->senderId,
+            "sender_id" => $message->senderId ?: $this->senderId,
             "callback_url" => $this->callbackUrl,
         ]);
         $response = $this->getHttpClient()->post('send-message')
@@ -248,6 +248,6 @@ class JumbefupiGateway extends Component
     {
         $time = microtime(true);
 
-        return date('Ymd-His-', $time) . sprintf('%04d', (int)(($time - (int)$time) * 10000)) . '-' . sprintf('%04d', random_int(0, 10000)) . '.txt';
+        return date('Ymd-His-', $time) . sprintf('%04d', (int)(($time - (int)$time) * 10000)) . '-' . sprintf('%04d', mt_rand(0, 10000)) . '.txt';
     }
 }
