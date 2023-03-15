@@ -34,14 +34,6 @@ class SmsMessage extends ActiveRecord
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public static function getDb()
-    {
-        return Yii::$app->jumbefupi->db;
-    }
-
-    /**
      * @inheritdoc
      */
     public function behaviors()

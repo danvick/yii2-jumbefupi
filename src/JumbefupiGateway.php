@@ -7,6 +7,7 @@ use Yii;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
 use yii\caching\Cache;
+use yii\db\ActiveRecord;
 use yii\db\BaseActiveRecord;
 use yii\db\Connection;
 use yii\di\Instance;
@@ -77,6 +78,14 @@ class JumbefupiGateway extends Component
     public $fileTransportPath = '@runtime/messages';
 
     /**
+     * @return Connection
+     */
+    public function getDb()
+    {
+        return Yii::$app->{$this->db};
+    }
+
+    /**
      * @inheritdoc
      * @throws \yii\base\Exception
      */
@@ -125,7 +134,7 @@ class JumbefupiGateway extends Component
      * @throws InvalidConfigException
      * @throws \yii\base\Exception
      */
-    protected function sendMessage($message) //TODO: Make this protected
+    protected function sendMessage($message) // TODO: Make this protected
     {
         if (is_array($message->recipients)) {
             $recipients = implode(",", $message->recipients);
@@ -152,7 +161,9 @@ class JumbefupiGateway extends Component
         Yii::$app->cache->delete($this->balanceCacheKey);
         $requestId = $responseContent['request_id'];
         $messages = $responseContent['messages'];
+        /** @var ActiveRecord $modelClass */
         $modelClass = Yii::createObject($this->model);
+        $messageModels = [];
         foreach ($messages as $textMessage) {
             $messageModel = new $modelClass([
                 'text' => $message->text,
@@ -162,8 +173,10 @@ class JumbefupiGateway extends Component
                 'status' => $textMessage['status'],
                 'request_id' => $requestId,
             ]);
-            $messageModel->save(false);
+            $messageModels[] = $messageModel;
         }
+        $this->getDb()->createCommand()->batchInsert($modelClass::tableName(), (new $modelClass())->attributes(), $messageModels)->execute();
+
         return $requestId;
     }
 
@@ -185,8 +198,9 @@ class JumbefupiGateway extends Component
             Yii::error("JUMBEFUPI RESPONSE ERROR: " . VarDumper::dumpAsString($responseContent));
             throw new \yii\base\Exception($responseContent['message']);
         }
+        /** @var ActiveRecord $modelClass */
         $modelClass = Yii::createObject($this->model);
-        $message = $modelClass::findOne(['message_id' => $messageId]);
+        $message = $modelClass::find()->where(['message_id' => $messageId])->one($this->db);
         if ($message) {
             $message->status = $responseContent['status'];
             $message->save(false);
