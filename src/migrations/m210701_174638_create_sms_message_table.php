@@ -13,10 +13,10 @@ class m210701_174638_create_sms_message_table extends Migration
     /**
      * @return array|string|Connection
      */
-    public function getDb()
+    /*public function getDb()
     {
         return Yii::$app->jumbefupi->db;
-    }
+    }*/
 
     /**
      * {@inheritdoc}

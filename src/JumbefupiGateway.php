@@ -78,14 +78,6 @@ class JumbefupiGateway extends Component
     public $fileTransportPath = '@runtime/messages';
 
     /**
-     * @return Connection
-     */
-    public function getDb()
-    {
-        return Yii::$app->{$this->db};
-    }
-
-    /**
      * @inheritdoc
      * @throws \yii\base\Exception
      */
@@ -175,7 +167,7 @@ class JumbefupiGateway extends Component
             ]);
             $messageModels[] = $messageModel;
         }
-        $this->getDb()->createCommand()->batchInsert($modelClass::tableName(), (new $modelClass())->attributes(), $messageModels)->execute();
+        $this->db->createCommand()->batchInsert($modelClass::tableName(), (new $modelClass())->attributes(), $messageModels)->execute();
 
         return $requestId;
     }
