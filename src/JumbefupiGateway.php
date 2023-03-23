@@ -10,6 +10,7 @@ use yii\caching\Cache;
 use yii\db\ActiveRecord;
 use yii\db\BaseActiveRecord;
 use yii\db\Connection;
+use yii\db\Expression;
 use yii\di\Instance;
 use yii\helpers\Json;
 use yii\helpers\VarDumper;
@@ -164,6 +165,10 @@ class JumbefupiGateway extends Component
                 'phone_number' => $textMessage['phone_number'],
                 'status' => $textMessage['status'],
                 'request_id' => $requestId,
+                'created_at' => new Expression('NOW()'),
+                'updated_at' => new Expression('NOW()'),
+                'created_by' => Yii::$app->user->id,
+                'updated_by' => Yii::$app->user->id,
             ]);
             $messageModels[] = $messageModel;
         }
