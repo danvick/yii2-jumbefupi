@@ -1,7 +1,7 @@
 <?php
+
 namespace danvick\jumbefupi\migrations;
 
-use Yii;
 use yii\db\Connection;
 use yii\db\Migration;
 
@@ -29,7 +29,7 @@ class m210701_174638_create_sms_message_table extends Migration
             'request_id' => $this->string(64),
             'phone_number' => $this->string(15),
             'text' => $this->text(),
-            'sms_count'=>$this->smallInteger(),
+            'sms_count' => $this->smallInteger(),
             'status' => $this->string(15),
             'created_by' => $this->integer(),
             'updated_by' => $this->integer(),
