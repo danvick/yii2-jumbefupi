@@ -259,6 +259,6 @@ class JumbefupiGateway extends Component
     {
         $time = microtime(true);
 
-        return date('Ymd-His-', $time) . sprintf('%04d', (int)(($time - (int)$time) * 10000)) . '-' . sprintf('%04d', mt_rand(0, 10000)) . '.txt';
+        return date('Ymd-His-', (int)$time) . sprintf('%04d', (int)(($time - (int)$time) * 10000)) . '-' . sprintf('%04d', mt_rand(0, 10000)) . '.txt';
     }
 }
