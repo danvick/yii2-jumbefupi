@@ -21,8 +21,13 @@ class TextMessage extends Component
      */
     public $senderId;
 
+    /**
+     * @var string $senderId
+     */
+    public $scheduledAt;
+
     public function toString()
     {
-        return "SenderID:\t$this->senderId\nRecipients:\t$this->recipients\nText:\t$this->text";
+        return "SenderID:\t$this->senderId\nRecipients:\t$this->recipients\nText:\t$this->text\nScheduledAt:\t$this->scheduledAt";
     }
 }

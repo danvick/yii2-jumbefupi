@@ -2,7 +2,6 @@
 
 namespace danvick\jumbefupi\models;
 
-use Yii;
 use yii\behaviors\BlameableBehavior;
 use yii\behaviors\TimestampBehavior;
 use yii\db\ActiveRecord;
@@ -21,6 +20,7 @@ use yii\db\Expression;
  * @property int|null $created_by
  * @property int|null $updated_by
  * @property string|null $created_at
+ * @property string|null $scheduled_at
  * @property string|null $updated_at
  */
 class SmsMessage extends ActiveRecord
@@ -55,7 +55,7 @@ class SmsMessage extends ActiveRecord
         return [
             [['text'], 'string'],
             [['sms_count', 'created_by', 'updated_by'], 'integer'],
-            [['created_at', 'updated_at'], 'safe'],
+            [['created_at', 'updated_at', 'scheduled_at'], 'safe'],
             [['message_id', 'request_id'], 'string', 'max' => 64],
             [['phone_number', 'status'], 'string', 'max' => 15],
         ];

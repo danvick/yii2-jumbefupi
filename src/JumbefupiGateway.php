@@ -12,6 +12,7 @@ use yii\db\BaseActiveRecord;
 use yii\db\Connection;
 use yii\db\Expression;
 use yii\di\Instance;
+use yii\helpers\ArrayHelper;
 use yii\helpers\Json;
 use yii\helpers\VarDumper;
 use yii\httpclient\Client;
@@ -127,7 +128,7 @@ class JumbefupiGateway extends Component
      * @throws InvalidConfigException
      * @throws \yii\base\Exception
      */
-    protected function sendMessage($message) // TODO: Make this protected
+    protected function sendMessage($message)
     {
         if (is_array($message->recipients)) {
             $recipients = implode(",", $message->recipients);
@@ -136,6 +137,7 @@ class JumbefupiGateway extends Component
         }
         $data = Json::encode([
             "message" => $message->text,
+            "send_at" => $message->scheduledAt,
             "recipients" => $recipients,
             "sender_id" => $message->senderId ?: $this->senderId,
             "callback_url" => $this->callbackUrl,
@@ -146,8 +148,9 @@ class JumbefupiGateway extends Component
             ->addHeaders(['Content-Length' => strlen($data)])
             ->setContent($data)
             ->send();
-        $responseContent = Json::decode($response->content, true);
+        $responseContent = Json::decode($response->content);
         if (!$response->isOk) {
+            // Yii::warning(ArrayHelper::toArray($this));
             Yii::error("RESPONSE ERROR: " . VarDumper::dumpAsString($responseContent) . " \nREQUEST DATA: " . VarDumper::dumpAsString($data));
             throw new \yii\base\Exception($responseContent['message']);
         }
@@ -164,11 +167,12 @@ class JumbefupiGateway extends Component
                 'message_id' => $textMessage['message_id'],
                 'phone_number' => $textMessage['phone_number'],
                 'status' => $textMessage['status'],
+                'scheduled_at' => $textMessage['send_at'],
                 'request_id' => $requestId,
                 'created_at' => new Expression('NOW()'),
                 'updated_at' => new Expression('NOW()'),
-                'created_by' => Yii::$app->user->id,
-                'updated_by' => Yii::$app->user->id,
+                'created_by' => isset(Yii::$app->user->id) ? Yii::$app->user->id : null,
+                'updated_by' => isset(Yii::$app->user->id) ? Yii::$app->user->id : null,
             ]);
             $messageModels[] = $messageModel;
         }
