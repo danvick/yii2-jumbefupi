@@ -167,7 +167,7 @@ class JumbefupiGateway extends Component
                 'message_id' => $textMessage['message_id'],
                 'phone_number' => $textMessage['phone_number'],
                 'status' => $textMessage['status'],
-                'scheduled_at' => $textMessage['send_at'],
+                // 'scheduled_at' => $textMessage['send_at'],
                 'request_id' => $requestId,
                 'created_at' => new Expression('NOW()'),
                 'updated_at' => new Expression('NOW()'),
