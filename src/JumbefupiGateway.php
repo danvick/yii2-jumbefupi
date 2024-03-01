@@ -123,6 +123,23 @@ class JumbefupiGateway extends Component
     }
 
     /**
+     * @param BatchTextMessage $batch
+     * @return bool|mixed
+     * @throws Exception
+     * @throws InvalidConfigException
+     * @throws \yii\base\Exception
+     * @throws \Exception
+     */
+    public function sendBatch($batch)
+    {
+        /*if ($this->useFileTransport) {
+            return $this->saveBatch($batch);
+        }*/
+
+        return $this->sendMessagesBatch($batch);
+    }
+
+    /**
      * @param TextMessage $message
      * @throws Exception
      * @throws InvalidConfigException
@@ -130,18 +147,10 @@ class JumbefupiGateway extends Component
      */
     protected function sendMessage($message)
     {
-        if (is_array($message->recipients)) {
-            $recipients = implode(",", $message->recipients);
-        } else {
-            $recipients = $message->recipients;
-        }
-        $data = Json::encode([
-            "message" => $message->text,
-            "send_at" => $message->scheduledAt,
-            "recipients" => $recipients,
+        $data = Json::encode(ArrayHelper::merge($message->toArray(), [
             "sender_id" => $message->senderId ?: $this->senderId,
             "callback_url" => $this->callbackUrl,
-        ]);
+        ]));
         $response = $this->getHttpClient()->post('send-message')
             ->addHeaders(['Authorization' => 'Basic ' . base64_encode("$this->gatewayUsername:$this->gatewayApiKey")])
             ->addHeaders(['Content-Type' => 'application/json'])
@@ -150,10 +159,50 @@ class JumbefupiGateway extends Component
             ->send();
         $responseContent = Json::decode($response->content);
         if (!$response->isOk) {
-            // Yii::warning(ArrayHelper::toArray($this));
             Yii::error("RESPONSE ERROR: " . VarDumper::dumpAsString($responseContent) . " \nREQUEST DATA: " . VarDumper::dumpAsString($data));
             throw new \yii\base\Exception($responseContent['message']);
         }
+        return $this->processSendMessageResponse($responseContent);
+    }
+
+    /**
+     * @param BatchTextMessage $batch
+     * @throws Exception
+     * @throws InvalidConfigException
+     * @throws \yii\base\Exception
+     */
+    protected function sendMessagesBatch($batch)
+    {
+        $messages = [];
+        foreach ($batch->messages as $message) {
+            $messages[] = $message->toArray();
+        }
+
+        $data = Json::encode([
+            "messages" => $messages,
+            "send_at" => $batch->scheduledAt,
+            "sender_id" => $batch->senderId ?: $this->senderId,
+            "callback_url" => $this->callbackUrl,
+        ]);
+        $response = $this->getHttpClient()->post('send-message/batch')
+            ->addHeaders(['Authorization' => 'Basic ' . base64_encode("$this->gatewayUsername:$this->gatewayApiKey")])
+            ->addHeaders(['Content-Type' => 'application/json'])
+            ->addHeaders(['Content-Length' => strlen($data)])
+            ->setContent($data)
+            ->send();
+        $responseContent = Json::decode($response->content);
+        if (!$response->isOk) {
+            Yii::error("RESPONSE ERROR: " . VarDumper::dumpAsString($responseContent) . " \nREQUEST DATA: " . VarDumper::dumpAsString($data));
+            throw new \yii\base\Exception($responseContent['message']);
+        }
+        return $this->processSendMessageResponse($responseContent);
+    }
+
+    /**
+     * @throws \yii\db\Exception
+     * @throws InvalidConfigException
+     */
+    protected function processSendMessageResponse($responseContent){
         Yii::$app->cache->delete($this->balanceCacheKey);
         $requestId = $responseContent['request_id'];
         $messages = $responseContent['messages'];
@@ -162,7 +211,7 @@ class JumbefupiGateway extends Component
         $messageModels = [];
         foreach ($messages as $textMessage) {
             $messageModel = new $modelClass([
-                'text' => $message->text,
+                'text' => $textMessage['text'],
                 'sms_count' => $textMessage['sms_count'],
                 'message_id' => $textMessage['message_id'],
                 'phone_number' => $textMessage['phone_number'],
