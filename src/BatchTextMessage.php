@@ -3,6 +3,8 @@
 namespace danvick\jumbefupi;
 
 use yii\base\Component;
+use yii\helpers\ArrayHelper;
+use yii\helpers\Json;
 
 class BatchTextMessage extends Component
 {
@@ -23,6 +25,6 @@ class BatchTextMessage extends Component
 
     public function toString()
     {
-        return "SenderID:\t$this->senderId\nScheduledAt:\t$this->scheduledAt";
+        return "SenderID:\t$this->senderId\nScheduledAt:\t$this->scheduledAt\nMessages:\t" . Json::encode(ArrayHelper::toArray($this->messages), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }
 }

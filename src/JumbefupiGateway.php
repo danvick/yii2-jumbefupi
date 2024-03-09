@@ -3,6 +3,7 @@
 namespace danvick\jumbefupi;
 
 use danvick\jumbefupi\models\SmsMessage;
+use RuntimeException;
 use Yii;
 use yii\base\Component;
 use yii\base\InvalidConfigException;
@@ -132,9 +133,9 @@ class JumbefupiGateway extends Component
      */
     public function sendBatch($batch)
     {
-        /*if ($this->useFileTransport) {
+        if ($this->useFileTransport) {
             return $this->saveBatch($batch);
-        }*/
+        }
 
         return $this->sendMessagesBatch($batch);
     }
@@ -295,13 +296,31 @@ class JumbefupiGateway extends Component
     {
         $path = Yii::getAlias($this->fileTransportPath);
         if (!is_dir($path) && !mkdir($path, 0777, true) && !is_dir($path)) {
-            throw new \RuntimeException(sprintf('Directory "%s" was not created', $path));
+            throw new RuntimeException(sprintf('Directory "%s" was not created', $path));
         }
-        $messageFilename = $this->generateMessageFileName(); // TODO: Use UUID?
+        $messageFilename = $this->generateMessageFileName();
         $file = $path . '/' . $messageFilename;
         file_put_contents($file, $message->toString());
 
         return $messageFilename;
+    }
+
+    /**
+     * @param BatchTextMessage $batch
+     * @return String
+     * @throws \Exception
+     */
+    protected function saveBatch($batch)
+    {
+        $path = Yii::getAlias($this->fileTransportPath);
+        if (!is_dir($path) && !mkdir($path, 0777, true) && !is_dir($path)) {
+            throw new RuntimeException(sprintf('Directory "%s" was not created', $path));
+        }
+        $batchFilename = $this->generateMessageFileName();
+        $file = "$path/$batchFilename";
+        file_put_contents($file, $batch->toString());
+
+        return $batchFilename;
     }
 
     /**
