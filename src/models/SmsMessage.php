@@ -30,7 +30,7 @@ class SmsMessage extends ActiveRecord
      */
     public static function tableName()
     {
-        return 'sms_message';
+        return '{{%sms_message}}';
     }
 
     /**
