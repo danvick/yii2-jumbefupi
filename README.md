@@ -2,6 +2,13 @@ Yii2 JumbeFupi
 ==============
 Yii2 extension for integrating with JumbeFupi SMS Gateway
 
+Requirements
+------------
+
+You need to register your account at [JumbeFupi](https://account.jumbefupi.com/site/login) if you want to send messages to your users or customers. Sign up is FREE.
+
+The JumbeFupi Gateway API credentials required (username, API key and senderID) will be available under the Developer page in your control panel.
+
 Installation
 ------------
 
@@ -45,16 +52,17 @@ The extension is used as an application component and configured in the applicat
     ...
     'jumbefupi' => [
         'class' => JumbefupiGateway::class,
-        'gatewayUsername' => null,                          // REQUIRED - Your JumbeFupi username
-        'gatewayApiKey' => null,                            // REQUIRED - Your JumbeFupi API key
-        'senderId' => null,                                 // REQUIRED - Your SenderID / Alphanumeric. If not set here, should be set when sending message
-        'callbackUrl' => null,                              // OPTIONAL - The URL where message status response from JumbeFupi Gateway will be sent
-        'model' => 'danvick\jumbefupi\models\SmsMessage',   // OPTIONAL - (Default: danvick\jumbefupi\models\SmsMessage)
+        'gatewayUsername' => 'jaribujf',                    // REQUIRED - your JumbeFupi username
+        'gatewayApiKey' => 'Jum83fUp14pI_kEy',              // REQUIRED - your JumbeFupi API key
+        'senderId' => 'JumbeFupi',                          // REQUIRED - your SenderID / Alphanumeric. If not set here, should be set when sending message
+        'callbackUrl' => null,                              // OPTIONAL - the URL where message status response from JumbeFupi Gateway will be sent
+        'model' => 'danvick\jumbefupi\models\SmsMessage',   // OPTIONAL - (default: danvick\jumbefupi\models\SmsMessage)
         'db' => 'db'                                        // OPTIONAL - the DB connection component for the messages table
-        'cacheBalance' => false,                            // OPTIONAL - Whether to store balance after enquiry - cache will be burst on message sending
-        'cache' => 'cache',                                 // OPTIONAL - The cache component to store balance if cacheBalance is true 
-        'balanceCacheKey' => 'JUMBEFUPI_BALANCE',           // OPTIONAL - Cache key for storage of JumbeFupi account balance
-        'useFileTransport' => false,                        // OPTIONAL - 
+        'cacheBalance' => false,                            // OPTIONAL - whether to store balance after enquiry - cache will be burst on message sending
+        'cache' => 'cache',                                 // OPTIONAL - the cache component to store balance if cacheBalance is true 
+        'balanceCacheKey' => 'JUMBEFUPI_BALANCE',           // OPTIONAL - cache key for storage of JumbeFupi account balance
+        'useFileTransport' => false,                        // OPTIONAL - useful in local development
+        'fileTransportPath' => '@runtime/messages'          // OPTIONAL - required if `useFileTransport` is true
     ],
 ]
 ```
@@ -74,6 +82,8 @@ You also should configure the extension migrations to be run in your application
 ```
 
 ### Sending a message
+
+Note: `yii2-jumbefupi` extension uses the `yii2-httpclient` and 'baseUrl' is already set in the JF extension itself. The current API base URL is 'https://api.jumbefupi.com/v2'
 
 ```php
 use danvick\jumbefupi\TextMessage;
@@ -98,10 +108,11 @@ You can either create an endpoint to handle message status callback so that when
     The server response to the callback will take the following shape:
     ```json
     {
-        "message_id": "xxxxxxxxxxxxx",
-        "phone_number": "07xxx",
+        "message_id": "517E70B0F3A611EC84223E99B9487780",
+        "phone_number": "0700000000",
         "cost": 1.0,
         "status": "queued",
+        "status_message": "Added to queue",
         "sms_count": 1
     }
     ```
@@ -122,3 +133,5 @@ Returns your JumbeFupi account balance. The balance can be cached if `cacheBalan
 Yii::$app->jumbefupi->checkBalance($fromCache)
 ```
 `$fromCache`: Boolean to enable getting cached balance if available or to ignore cached value. Only useful when `cacheBalance` is set to true in config 
+
+See the API documentation for more information here: [JumbeFupi API Docs](https://api.jumbefupi.com/v2/docs/api)
