@@ -57,7 +57,7 @@ The extension is used as an application component and configured in the applicat
         'senderId' => 'JumbeFupi',                          // REQUIRED - your SenderID / Alphanumeric. If not set here, should be set when sending message
         'callbackUrl' => null,                              // OPTIONAL - the URL where message status response from JumbeFupi Gateway will be sent
         'model' => 'danvick\jumbefupi\models\SmsMessage',   // OPTIONAL - (default: danvick\jumbefupi\models\SmsMessage)
-        'db' => 'db'                                        // OPTIONAL - the DB connection component for the messages table
+        'db' => 'db',                                       // OPTIONAL - the DB connection component for the messages table
         'cacheBalance' => false,                            // OPTIONAL - whether to store balance after enquiry - cache will be burst on message sending
         'cache' => 'cache',                                 // OPTIONAL - the cache component to store balance if cacheBalance is true 
         'balanceCacheKey' => 'JUMBEFUPI_BALANCE',           // OPTIONAL - cache key for storage of JumbeFupi account balance
@@ -83,7 +83,7 @@ You also should configure the extension migrations to be run in your application
 
 ### Sending a message
 
-Note: `yii2-jumbefupi` extension uses the `yii2-httpclient` and 'baseUrl' is already set in the JF extension itself. The current API base URL is 'https://api.jumbefupi.com/v2'
+> Note: `yii2-jumbefupi` extension uses the `yii2-httpclient` and 'baseUrl' is already set in the yii2-jumbefupi extension itself. The current API base URL is `https://api.jumbefupi.com/v2`
 
 ```php
 use danvick\jumbefupi\TextMessage;
@@ -134,4 +134,6 @@ Yii::$app->jumbefupi->checkBalance($fromCache)
 ```
 `$fromCache`: Boolean to enable getting cached balance if available or to ignore cached value. Only useful when `cacheBalance` is set to true in config 
 
-See the API documentation for more information here: [JumbeFupi API Docs](https://api.jumbefupi.com/v2/docs/api)
+### API Documentation
+
+See the API documentation for more information here: [JumbeFupi API Docs](https://api.jumbefupi.com/v2/docs)
