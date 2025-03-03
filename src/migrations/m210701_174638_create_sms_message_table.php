@@ -31,8 +31,8 @@ class m210701_174638_create_sms_message_table extends Migration
             'text' => $this->text(),
             'sms_count' => $this->smallInteger(),
             'status' => $this->string(15),
-            'created_by' => $this->string(20),
-            'updated_by' => $this->string(20),
+            'created_by' => $this->integer(),
+            'updated_by' => $this->integer(),
             'created_at' => $this->dateTime(),
             'updated_at' => $this->dateTime(),
         ]);
