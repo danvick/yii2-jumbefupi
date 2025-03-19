@@ -1,5 +1,7 @@
 <?php
 
+namespace danvick\jumbefupi\migrations;
+
 use yii\db\Migration;
 
 /**
@@ -12,10 +14,8 @@ class m250303_105213_change_sms_message_blameable_column_type extends Migration
      */
     public function safeUp()
     {
-        $this->alterTable('{{%sms_message}}', [
-            'created_by' => $this->string(20),
-            'updated_by' => $this->string(20),
-        ]);
+        $this->alterColumn('{{%sms_message}}', 'created_by', $this->string());
+        $this->alterColumn('{{%sms_message}}', 'updated_by', $this->string());
     }
 
     /**
@@ -23,10 +23,8 @@ class m250303_105213_change_sms_message_blameable_column_type extends Migration
      */
     public function safeDown()
     {
-        $this->alterTable('{{%sms_message}}', [
-            'created_by' => $this->integer(),
-            'updated_by' => $this->integer(),
-        ]);
+        echo "m250303_105213_change_sms_message_blameable_column_type cannot be reverted.\n";
+        return false;
     }
 
     /*
@@ -44,3 +42,4 @@ class m250303_105213_change_sms_message_blameable_column_type extends Migration
     }
     */
 }
+
